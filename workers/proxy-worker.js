@@ -28,30 +28,36 @@ export default {
 
     const url = new URL(request.url);
 
-    // ===== 健康检查 =====
-    if (url.pathname === '/health' || url.pathname === '/' || url.pathname === '') {
+    // ===== 健康检查（仅 /health 路径，不占用根路径） =====
+    if (url.pathname === '/health') {
       return new Response(JSON.stringify({
         status: 'ok',
         service: 'ClashNet Proxy',
         version: '1.0.0',
-        usage: '在 Clash 中配置此地址为 HTTP 代理',
-        note: '免费版支持 HTTP 转发；HTTPS(CONNECT) 需要 Workers Paid 计划',
+        usage: 'Clash 配置代理地址',
+        note: '免费版仅支持 HTTP 转发；HTTPS(CONNECT) 需 Workers Paid',
+        token_check: ACCESS_TOKEN ? '需要 ?token= 参数' : '未设置 Token',
       }), {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
-    // ===== 根据 token 参数设置代理请求中的 Token（供订阅 API 使用） =====
-    // 如果请求的是 /api/subscribe，转发到后端 ClashNet 服务
-    if (url.pathname.startsWith('/api/')) {
-      const backendUrl = url.searchParams.get('backend') || 'http://localhost:3000';
-      const forwardUrl = backendUrl + url.pathname + url.search;
-      return await fetch(forwardUrl);
-    }
-
-    // ===== Token 鉴权 =====
+    // ===== Token 鉴权（所有其他请求都需要） =====
     const token = url.searchParams.get('token') || request.headers.get('X-Proxy-Token');
     if (token !== ACCESS_TOKEN) {
+      // 根路径不带 token 时返回友好的提示
+      if (url.pathname === '/' || url.pathname === '') {
+        return new Response(JSON.stringify({
+          status: 'ClashNet Proxy',
+          message: '此地址是 Clash 代理服务器，请在 Clash 配置中使用',
+          usage: '在 Clash 配置中设置 type: http, server: 此域名, port: 443, tls: true',
+          auth: '在 URL 后添加 ?token=你的令牌 或设置 X-Proxy-Token 请求头',
+          test: `curl ${url.origin}/health?token=你的令牌`,
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
+      }
       return new Response(JSON.stringify({ error: 'Forbidden: invalid token' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -70,22 +76,42 @@ export default {
 
 /**
  * 处理 HTTP 代理请求
- * Clash 发送的 HTTP 请求：GET http://github.com/path HTTP/1.1
+ * Clash 发送的 HTTP 请求通过 CONNECT 方法建立隧道后，
+ * 或当 Clash 配置为 http 类型代理时发送的标准请求
+ *
+ * 注意：Cloudflare Workers 免费版不支持 TCP Socket (connect()) API
+ * 因此完整的 HTTPS CONNECT 隧道需要 Workers Paid 计划
+ * 免费版只能转发 HTTP 请求
  */
 async function handleHttpProxy(request) {
   try {
-    const url = new URL(request.url);
-
-    // 构造目标 URL
-    let targetUrl = url.searchParams.get('url');
+    // 直接使用 request.url 中的路径作为目标
+    const requestUrl = new URL(request.url);
+    
+    // 构造目标 URL - 对于 HTTP 代理，Clash 发送完整 URL 在请求行
+    let targetUrl = '';
+    
+    // 尝试从查询参数获取目标 URL
+    targetUrl = requestUrl.searchParams.get('url');
+    
+    // 如果没指定，则使用 pathname（去掉开头的 /）
     if (!targetUrl) {
-      // 尝试从请求行提取完整 URL
-      targetUrl = url.pathname + url.search;
+      targetUrl = requestUrl.pathname.replace(/^\//, '');
+    }
+    
+    // 确保有协议前缀
+    if (targetUrl && !targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = 'https://' + targetUrl;
     }
 
-    // 确保有协议前缀
-    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-      targetUrl = 'https://' + targetUrl;
+    if (!targetUrl || targetUrl === 'https://') {
+      return new Response(JSON.stringify({
+        error: 'No target URL specified',
+        usage: '在 Clash 中使用 CONNECT 方法 (HTTPS) 或直接指定目标 URL',
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // 构造转发请求
@@ -100,6 +126,7 @@ async function handleHttpProxy(request) {
     proxyRequest.headers.delete('Proxy-Connection');
     proxyRequest.headers.delete('Proxy-Authorization');
     proxyRequest.headers.delete('X-Proxy-Token');
+    proxyRequest.headers.delete('Host');
 
     // 发送请求到目标服务器
     const response = await fetch(proxyRequest);
