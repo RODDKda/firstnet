@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>规则集 - ClashNet</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">⚡</div>
+      <span>ClashNet</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/">首页</a>
+      <a href="/config.html">配置生成</a>
+      <a href="/rules.html" class="active">规则集</a>
+      <a href="/docs.html">使用文档</a>
+    </div>
+  </nav>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1>📋 预置规则集</h1>
+        <p>以下规则集可在配置生成时自由组合选择，为不同服务指定代理路由策略</p>
+      </div>
+
+      <div class="alert alert-info">
+        💡 每条规则都指向「🚀 节点选择」代理组，你可以在 Clash 客户端中自由切换走哪个节点。
+        国内服务默认直连，无需额外配置。
+      </div>
+
+      <div id="ruleset-container" class="ruleset-list">
+        <div class="alert alert-info">加载中...</div>
+      </div>
+
+      <!-- 规则示例说明 -->
+      <section style="margin-top: 48px;">
+        <h2 style="font-size: 22px; margin-bottom: 16px;">🧩 规则匹配优先级</h2>
+        <div class="config-panel" style="padding: 24px;">
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            Clash 规则按照<strong style="color: var(--text-primary);">从上到下依次匹配</strong>，匹配到即停止，策略说明：
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+            <div class="stat-card" style="text-align:left; padding: 16px;">
+              <div style="font-size: 13px; font-weight:600; margin-bottom:4px;">🚀 节点选择</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">手动选择需要走代理的节点</div>
+            </div>
+            <div class="stat-card" style="text-align:left; padding: 16px;">
+              <div style="font-size: 13px; font-weight:600; margin-bottom:4px;">♻️ 自动选择</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">自动测速，选择延迟最低的节点</div>
+            </div>
+            <div class="stat-card" style="text-align:left; padding: 16px;">
+              <div style="font-size: 13px; font-weight:600; margin-bottom:4px;">🎯 直连</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">不走代理，直接连接目标</div>
+            </div>
+            <div class="stat-card" style="text-align:left; padding: 16px;">
+              <div style="font-size: 13px; font-weight:600; margin-bottom:4px;">🐟 漏网之鱼</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">未匹配到任何规则的流量归宿</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p>ClashNet 配置中心 · 仅供学习研究使用</p>
+    </footer>
+  </main>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

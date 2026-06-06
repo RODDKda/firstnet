@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配置生成 - ClashNet</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">⚡</div>
+      <span>ClashNet</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/">首页</a>
+      <a href="/config.html" class="active">配置生成</a>
+      <a href="/rules.html">规则集</a>
+      <a href="/docs.html">使用文档</a>
+    </div>
+  </nav>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1>⚙️ Clash 配置生成器</h1>
+        <p>选择需要的服务规则，填写代理信息，一键生成完整的 Clash 配置文件</p>
+      </div>
+
+      <div class="config-builder">
+        <!-- 左侧：配置面板 -->
+        <div class="config-panel">
+          <h3>📋 服务选择</h3>
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button id="select-all" class="btn btn-sm btn-secondary">全选</button>
+            <button id="deselect-all" class="btn btn-sm btn-secondary">取消全选</button>
+          </div>
+          <div id="service-checkboxes" class="checkbox-group">
+            <div class="alert alert-info">加载中...</div>
+          </div>
+
+          <hr style="border-color: var(--border-color); margin: 24px 0;">
+
+          <h3>🔧 代理配置</h3>
+
+          <div class="form-group">
+            <label for="config-mode">代理模式</label>
+            <select id="config-mode">
+              <option value="rule">Rule - 规则模式（推荐）</option>
+              <option value="global">Global - 全局模式</option>
+              <option value="direct">Direct - 直连模式</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="proxy-subscription">代理订阅地址（可选）</label>
+            <input type="url" id="proxy-subscription" placeholder="https://example.com/subscribe?token=xxx">
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">填入机场订阅地址后，配置将自动拉取节点列表</div>
+          </div>
+
+          <div class="form-group">
+            <label for="custom-proxies">自定义代理节点（YAML 格式，可选）</label>
+            <textarea id="custom-proxies" placeholder="如果没有订阅地址，可在此处填写自定义节点，格式：
+- name: 节点1
+  type: ss
+  server: 1.2.3.4
+  port: 443
+  cipher: chacha20-ietf-poly1305
+  password: your-password"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-item" style="display:inline-flex; cursor:pointer;">
+              <input type="checkbox" id="allow-lan" checked>
+              <span class="check-mark">✓</span>
+              <span>允许局域网连接</span>
+            </label>
+          </div>
+
+          <div style="display:flex; gap:12px; margin-top:24px;">
+            <button id="generate-config" class="btn btn-primary" style="flex:1;">
+              🔄 刷新预览
+            </button>
+            <button id="download-config" class="btn btn-success" style="flex:1;">
+              ⬇️ 下载配置
+            </button>
+          </div>
+
+          <div style="margin-top:20px;">
+            <label style="font-size:14px; font-weight:600; color:var(--text-secondary);">订阅链接</label>
+            <div class="subscription-url">
+              <code id="subscribe-url-value">-</code>
+              <button id="copy-sub-url" class="btn btn-sm btn-secondary">复制</button>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+              将此链接填入 Clash 客户端的订阅管理，每次重启或手动更新时会自动拉取最新配置
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：配置预览 -->
+        <div class="config-panel">
+          <h3>📄 配置预览</h3>
+          <div class="config-preview">
+            <pre id="config-preview-content"># 正在生成配置...</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>ClashNet 配置中心 · 仅供学习研究使用</p>
+    </footer>
+  </main>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

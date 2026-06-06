@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClashNet - Clash 代理配置中心</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">⚡</div>
+      <span>ClashNet</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/" class="active">首页</a>
+      <a href="/config.html">配置生成</a>
+      <a href="/rules.html">规则集</a>
+      <a href="/docs.html">使用文档</a>
+    </div>
+  </nav>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <main class="main-content">
+    <!-- Hero -->
+    <section class="hero">
+      <h1>ClashNet 配置中心</h1>
+      <p>一键生成 Clash 代理配置文件，智能路由 Google、GitHub、Telegram 等常见外网服务，让你的网络体验更流畅</p>
+      <div class="hero-actions">
+        <a href="/config.html" class="btn btn-primary">
+          ⚙️ 生成配置
+        </a>
+        <a href="/docs.html" class="btn btn-secondary">
+          📖 使用文档
+        </a>
+      </div>
+    </section>
+
+    <div class="container">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-rulesets">-</div>
+          <div class="stat-label">规则集</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-rules">-</div>
+          <div class="stat-label">代理规则</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">⚡</div>
+          <div class="stat-label">自动更新</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">🔒</div>
+          <div class="stat-label">安全加密</div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <section class="features">
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="icon">🌐</div>
+            <h3>智能路由规则</h3>
+            <p>内置 Google、GitHub、Telegram、Twitter/X、YouTube 等主流外网的精准路由规则，开箱即用</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📦</div>
+            <h3>一键配置生成</h3>
+            <p>可视化选择需要的服务规则，自动生成完整的 Clash YAML 配置文件，支持直接下载和订阅链接</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🔄</div>
+            <h3>订阅自动更新</h3>
+            <p>支持代理提供商订阅地址，配置自动更新，节点健康检查，确保始终可用</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📱</div>
+            <h3>全平台兼容</h3>
+            <p>兼容 Clash Meta、Clash Verge、Clash for Windows、Clash for Android 等主流客户端</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🔌</div>
+            <h3>Bot 服务扩展</h3>
+            <p>预留 Telegram Bot 等后端服务接口，可在此平台上运行数据收发、定时任务等服务</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">⚙️</div>
+            <h3>灵活自定义</h3>
+            <p>支持自定义代理节点、规则策略、DNS 配置，满足各类使用场景</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subscription Info -->
+      <section style="padding: 40px 0;">
+        <h2 style="font-size: 24px; margin-bottom: 16px;">🔗 订阅地址</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+          将以下地址填入 Clash 客户端的订阅管理，即可自动获取配置更新：
+        </p>
+        <div class="subscription-url">
+          <code id="home-sub-url">https://<span id="domain-placeholder">your-domain.com</span>/api/subscribe</code>
+          <button class="btn btn-sm btn-secondary" onclick="copyToClipboard(document.getElementById('home-sub-url').textContent); showToast('订阅地址已复制','success')">复制</button>
+          <a href="/config.html" class="btn btn-sm btn-primary">自定义配置</a>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p>ClashNet 配置中心 · 仅供学习研究使用</p>
+    </footer>
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script>
+    // 填充域名
+    const domain = window.location.host;
+    document.getElementById('domain-placeholder').textContent = domain;
+    document.getElementById('home-sub-url').textContent = window.location.origin + '/api/subscribe';
+  </script>
+</body>
+</html>
