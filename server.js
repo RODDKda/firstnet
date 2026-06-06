@@ -8,8 +8,25 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DOMAIN = process.env.DOMAIN || 'localhost';
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN || '';
 
-// ===================== 中间件 =====================
+// ===================== Token 鉴权中间件 =====================
+// 保护订阅和配置生成 API，防止他人盗用
+function requireToken(req, res, next) {
+  // 如果没设置 ACCESS_TOKEN，放行（兼容未配置的情况）
+  if (!ACCESS_TOKEN) return next();
+
+  const token = req.query.token || req.headers['x-access-token'];
+  if (token !== ACCESS_TOKEN) {
+    return res.status(403).json({
+      error: '拒绝访问：无效的 Token',
+      hint: '请在订阅链接末尾添加 ?token=你的访问令牌',
+    });
+  }
+  next();
+}
+
+// ===================== 通用中间件 =====================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -231,6 +248,8 @@ function buildClashConfig(options = {}) {
     socksPort = 7891,
     allowLan = true,
     logLevel = 'warning',
+    cloudflareDomain = '',  // Cloudflare Workers 代理域名，如 proxy.yourdomain.com
+    cloudflareToken = '',   // 代理 Worker 的访问令牌
   } = options;
 
   // 构建规则
@@ -276,7 +295,30 @@ function buildClashConfig(options = {}) {
   };
 
   // 代理节点部分
-  if (subscriptionUrl) {
+  // 优先使用 Cloudflare Workers 作为默认代理（无需机场/服务器）
+  if (cloudflareDomain) {
+    const tokenParam = cloudflareToken ? `?token=${cloudflareToken}` : '';
+    config.proxies = [
+      {
+        name: '☁️ Cloudflare 代理',
+        type: 'http',
+        server: cloudflareDomain,
+        port: 443,
+        tls: true,
+        'skip-cert-verify': false,
+        udp: false,
+      },
+    ];
+    // 额外自定义节点
+    if (customProxies && customProxies.trim()) {
+      try {
+        const extraProxies = yaml.load(customProxies);
+        if (Array.isArray(extraProxies)) {
+          config.proxies = [...config.proxies, ...extraProxies];
+        }
+      } catch (e) { /* 忽略 */ }
+    }
+  } else if (subscriptionUrl) {
     config['proxy-providers'] = {
       Provider: {
         type: 'http',
@@ -444,8 +486,8 @@ app.get('/api/rulesets/:name', (req, res) => {
   res.json(set);
 });
 
-// 生成 Clash 配置
-app.post('/api/config', (req, res) => {
+// 生成 Clash 配置（POST 方式 —— 受 Token 保护）
+app.post('/api/config', requireToken, (req, res) => {
   try {
     const options = req.body || {};
     const yamlContent = buildClashConfig(options);
@@ -457,8 +499,8 @@ app.post('/api/config', (req, res) => {
   }
 });
 
-// 获取订阅链接（GET 方式下载配置）
-app.get('/api/subscribe', (req, res) => {
+// 获取订阅链接（GET 方式下载配置 —— 受 Token 保护）
+app.get('/api/subscribe', requireToken, (req, res) => {
   try {
     const selectedParam = req.query.services || '';
     const selectedServices = selectedParam
@@ -471,6 +513,8 @@ app.get('/api/subscribe', (req, res) => {
       mode: req.query.mode || 'rule',
       allowLan: req.query.allow_lan !== 'false',
       customProxies: req.query.proxies || '',
+      cloudflareDomain: req.query.cloudflare || process.env.CLOUDFLARE_PROXY_DOMAIN || '',
+      cloudflareToken: req.query.cf_token || process.env.ACCESS_TOKEN || '',
     };
 
     const yamlContent = buildClashConfig(options);
@@ -495,12 +539,19 @@ app.get('/api/rules/:name', (req, res) => {
   res.send(ruleContent);
 });
 
+// 获取前端 Token（仅同源前端可调用，用于在前端页面显示带 Token 的订阅链接）
+app.get('/api/token', (req, res) => {
+  res.json({ token: ACCESS_TOKEN || '', enabled: !!ACCESS_TOKEN });
+});
+
 // 服务器状态
 app.get('/api/status', (req, res) => {
   res.json({
     service: 'ClashNet 配置中心',
     version: '1.0.0',
     domain: DOMAIN,
+    auth_enabled: !!ACCESS_TOKEN,
+    auth_hint: ACCESS_TOKEN ? '订阅链接需加 ?token= 参数访问' : '未启用访问控制',
     rulesets: Object.keys(RULE_SETS).length,
     total_rules: Object.values(RULE_SETS).reduce((sum, s) => sum + s.rules.length, 0),
     uptime: process.uptime(),

@@ -31,7 +31,18 @@
 
       <!-- 快速入门 -->
       <section class="docs-section">
+        <div class="alert alert-warning">
+          🔒 <strong>安全提示：</strong>此服务已启用访问令牌（Token）保护。所有订阅链接和 API 请求都需要附带 <code>?token=...</code> 参数才能访问。
+          请妥善保管你的 Token，不要分享给他人。
+        </div>
+
         <h2>🚀 快速入门</h2>
+
+        <h3>你的访问令牌</h3>
+        <p>访问令牌配置在服务器 <code>.env</code> 文件中，查看方式：</p>
+        <pre><code># 在项目目录下查看
+cat .env | grep ACCESS_TOKEN</code></pre>
+        <p>如需更换，编辑 <code>.env</code> 中的 <code>ACCESS_TOKEN</code> 值，然后重启服务即可。</p>
 
         <h3>1. 生成配置文件</h3>
         <p>
@@ -64,7 +75,11 @@
           订阅链接可以让客户端自动获取配置更新，无需每次手动下载。在配置生成页面复制订阅链接，
           然后在 Clash 客户端中添加为远程订阅：
         </p>
-        <pre><code>https://你的域名/api/subscribe?services=google,github,telegram,twitter</code></pre>
+        <pre><code>https://你的域名/api/subscribe?token=你的访问令牌&services=google,github,telegram,twitter</code></pre>
+        <div class="alert alert-danger">
+          ⚠️ <strong>重要：</strong>Token 参数不可省略！缺少 Token 的请求将返回 403 错误。
+          你的 Token 在 <code>.env</code> 文件中，部署后请牢记。
+        </div>
         <p><strong>支持的查询参数：</strong></p>
         <ul>
           <li><code>services</code> - 逗号分隔的服务标识，如 <code>google,github,telegram</code></li>
@@ -200,13 +215,65 @@ Content-Type: application/json
         <p>查看服务运行状态和统计信息。</p>
       </section>
 
+      <!-- Cloudflare 部署方式（新增） -->
+      <section class="docs-section" style="border: 1px solid var(--accent-warning);">
+        <h2>☁️ Cloudflare 部署方案（推荐，零成本）</h2>
+        <div class="alert alert-success">
+          ✅ <strong>不需要 VPS，不需要机场！</strong>只要你有域名托管在 Cloudflare，就能用 Workers 做代理转发。
+        </div>
+
+        <h3>整体架构</h3>
+        <pre><code>手机 Clash → proxy.你的域名(Cloudflare Worker) → 目标网站(GitHub/Telegram)
+        ↑ 网站放在 Cloudflare Pages
+        ↑ 代理用 Cloudflare Workers</code></pre>
+
+        <h3>第一步：部署网站到 Cloudflare Pages</h3>
+        <ol>
+          <li>登录 <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Dashboard</a></li>
+          <li>进入 Pages → 创建项目 → 连接到 Git 仓库</li>
+          <li>构建设置：框架=None，构建命令=留空，输出目录=<code>public</code></li>
+          <li>部署后设置自定义域名</li>
+        </ol>
+
+        <h3>第二步：部署代理 Worker</h3>
+        <p>项目中的 <code>workers/proxy-worker.js</code> 是代理 Worker。</p>
+        <pre><code># 安装 wrangler CLI
+npm install -g wrangler
+
+# 登录 Cloudflare
+wrangler login
+
+# 部署 Worker
+wrangler deploy
+
+# 设置访问令牌（安全）
+wrangler secret put ACCESS_TOKEN</code></pre>
+        <p>部署后，在 Cloudflare Dashboard 添加 DNS 记录：</p>
+        <ul>
+          <li>类型：<code>CNAME</code></li>
+          <li>名称：<code>proxy</code></li>
+          <li>目标：<code>你的域名</code></li>
+          <li>代理状态：开启（橙色云）</li>
+        </ul>
+        <div class="alert alert-info">
+          💡 Workers 免费版每天 10 万请求，日常浏览 GitHub/Telegram 完全够用。
+          如果要看视频/大文件，建议升级 Workers 付费版（$5/月）。
+        </div>
+
+        <h3>第三步：配置 Clash 客户端</h3>
+        <p>在配置生成页面，填入 Cloudflare 代理域名：</p>
+        <ul>
+          <li><strong>Cloudflare 代理域名：</strong> <code>proxy.你的域名</code></li>
+        </ul>
+        <p>然后生成配置，导入手机 Clash App 即可。</p>
+      </section>
+
       <!-- 部署说明 -->
       <section class="docs-section">
-        <h2>🌐 部署到服务器</h2>
+        <h2>🌐 部署到服务器（备选方案）</h2>
         <p>将项目部署到你的域名服务器上：</p>
         <h3>使用 Node.js 直接运行</h3>
-        <pre><code>git clone https://github.com/your-repo/clashnet.git
-cd clashnet
+        <pre><code>cd D:\claw\clashnet
 npm install
 # 编辑 .env 文件，设置你的域名
 npm start</code></pre>

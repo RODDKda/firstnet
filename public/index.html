@@ -97,13 +97,16 @@
 
       <!-- Subscription Info -->
       <section style="padding: 40px 0;">
+        <div class="alert alert-warning">
+          🔒 此服务已启用访问令牌保护，订阅链接包含 Token，请勿分享给他人。
+        </div>
         <h2 style="font-size: 24px; margin-bottom: 16px;">🔗 订阅地址</h2>
         <p style="color: var(--text-secondary); margin-bottom: 16px;">
-          将以下地址填入 Clash 客户端的订阅管理，即可自动获取配置更新：
+          将以下地址填入 Clash 客户端的订阅管理，即可自动获取配置更新（链接已包含 Token）：
         </p>
         <div class="subscription-url">
-          <code id="home-sub-url">https://<span id="domain-placeholder">your-domain.com</span>/api/subscribe</code>
-          <button class="btn btn-sm btn-secondary" onclick="copyToClipboard(document.getElementById('home-sub-url').textContent); showToast('订阅地址已复制','success')">复制</button>
+          <code id="home-sub-url">加载中...</code>
+          <button class="btn btn-sm btn-secondary" onclick="copySubUrl()">复制</button>
           <a href="/config.html" class="btn btn-sm btn-primary">自定义配置</a>
         </div>
       </section>
@@ -116,10 +119,29 @@
 
   <script src="/js/main.js"></script>
   <script>
-    // 填充域名
-    const domain = window.location.host;
-    document.getElementById('domain-placeholder').textContent = domain;
-    document.getElementById('home-sub-url').textContent = window.location.origin + '/api/subscribe';
+    // 加载 Token 并显示带 Token 的订阅地址
+    let HOME_TOKEN = '';
+    fetch('/api/token').then(r => r.json()).then(d => {
+      HOME_TOKEN = d.token || '';
+      const base = window.location.origin;
+      let url = base + '/api/subscribe';
+      if (HOME_TOKEN) url += '?token=' + HOME_TOKEN;
+      document.getElementById('home-sub-url').textContent = url;
+    }).catch(() => {
+      document.getElementById('home-sub-url').textContent = window.location.origin + '/api/subscribe';
+    });
+
+    function copySubUrl() {
+      const text = document.getElementById('home-sub-url').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('订阅地址已复制','success'));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('订阅地址已复制','success');
+      }
+    }
   </script>
 </body>
 </html>

@@ -1,5 +1,22 @@
 // ===================== ClashNet Frontend App =====================
 
+// 全局变量：访问令牌
+let APP_TOKEN = '';
+
+// 从服务器获取 Token
+async function fetchToken() {
+  try {
+    const res = await api('/status');
+    const data = await res.json();
+    // Token 通过单独的 /api/token 接口获取（仅前端使用，不会被订阅客户端看到）
+    if (data.auth_enabled) {
+      const tokenRes = await api('/token');
+      const tokenData = await tokenRes.json();
+      APP_TOKEN = tokenData.token || '';
+    }
+  } catch (e) { /* 忽略 */ }
+}
+
 // 工具函数
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return document.querySelectorAll(sel); }
@@ -119,15 +136,24 @@ async function initConfigPage() {
     const subscription = document.getElementById('proxy-subscription')?.value || '';
     const proxies = document.getElementById('custom-proxies')?.value || '';
     const allowLan = document.getElementById('allow-lan')?.checked ?? true;
+    const cfDomain = document.getElementById('cf-domain')?.value || '';
+
+    const params = new URLSearchParams({
+      services: selected.join(','),
+      mode,
+      subscription,
+      proxies,
+      allow_lan: allowLan,
+      cloudflare: cfDomain,
+    });
+    if (APP_TOKEN) params.set('token', APP_TOKEN);
 
     try {
-      const res = await fetch('/api/subscribe?' + new URLSearchParams({
-        services: selected.join(','),
-        mode,
-        subscription,
-        proxies,
-        allow_lan: allowLan,
-      }));
+      const res = await fetch('/api/subscribe?' + params.toString());
+      if (res.status === 403) {
+        previewEl.textContent = '# 错误：Token 无效或未配置，请在 .env 中设置 ACCESS_TOKEN';
+        return;
+      }
       const yaml = await res.text();
       previewEl.textContent = yaml;
     } catch (e) {
@@ -136,6 +162,7 @@ async function initConfigPage() {
   }
 
   // 监听变化
+  document.getElementById('cf-domain')?.addEventListener('input', updatePreview);
   document.getElementById('config-mode')?.addEventListener('change', updatePreview);
   document.getElementById('proxy-subscription')?.addEventListener('input', updatePreview);
   document.getElementById('custom-proxies')?.addEventListener('input', updatePreview);
@@ -156,13 +183,22 @@ async function initConfigPage() {
     const selected = getSelectedServices();
     const mode = document.getElementById('config-mode')?.value || 'rule';
     const subscription = document.getElementById('proxy-subscription')?.value || '';
+    const cfDomain = document.getElementById('cf-domain')?.value || '';
+
+    const params = new URLSearchParams({
+      services: selected.join(','),
+      mode,
+      subscription,
+      cloudflare: cfDomain,
+    });
+    if (APP_TOKEN) params.set('token', APP_TOKEN);
 
     try {
-      const res = await fetch('/api/subscribe?' + new URLSearchParams({
-        services: selected.join(','),
-        mode,
-        subscription,
-      }));
+      const res = await fetch('/api/subscribe?' + params.toString());
+      if (res.status === 403) {
+        showToast('Token 无效，无法下载', 'error');
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -178,11 +214,15 @@ async function initConfigPage() {
     }
   });
 
-  // 订阅 URL
+  // 订阅 URL（带 Token）
   function getSubscribeUrl() {
     const selected = getSelectedServices();
     const base = window.location.origin;
-    return `${base}/api/subscribe?services=${selected.join(',')}`;
+    const cfDomain = document.getElementById('cf-domain')?.value || '';
+    let url = `${base}/api/subscribe?services=${selected.join(',')}`;
+    if (cfDomain) url += `&cloudflare=${cfDomain}`;
+    if (APP_TOKEN) url += `&token=${APP_TOKEN}`;
+    return url;
   }
 
   subscribeUrlEl.textContent = getSubscribeUrl();
@@ -237,12 +277,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 根据页面初始化不同模块
   if (document.getElementById('config-preview-content')) {
-    initConfigPage();
-  }
-  if (document.getElementById('stat-rulesets')) {
+    fetchToken().then(() => initConfigPage());
+  } else if (document.getElementById('stat-rulesets')) {
     initHomePage();
-  }
-  if (document.getElementById('ruleset-container')) {
+  } else if (document.getElementById('ruleset-container')) {
     initRulesPage();
   }
 });

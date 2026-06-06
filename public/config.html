@@ -46,6 +46,14 @@
           <h3>🔧 代理配置</h3>
 
           <div class="form-group">
+            <label for="cf-domain">Cloudflare Workers 代理域名（推荐，无需机场）</label>
+            <input type="text" id="cf-domain" placeholder="proxy.你的域名">
+            <div style="font-size:12px; color:var(--accent-success); margin-top:4px;">
+              ✅ 不需要机场和服务器！部署 Cloudflare Worker 后，流量通过 Cloudflare 边缘网络转发
+            </div>
+          </div>
+
+          <div class="form-group">
             <label for="config-mode">代理模式</label>
             <select id="config-mode">
               <option value="rule">Rule - 规则模式（推荐）</option>
@@ -55,15 +63,15 @@
           </div>
 
           <div class="form-group">
-            <label for="proxy-subscription">代理订阅地址（可选）</label>
+            <label for="proxy-subscription">机场订阅地址（可选，有机场时填）</label>
             <input type="url" id="proxy-subscription" placeholder="https://example.com/subscribe?token=xxx">
-            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">填入机场订阅地址后，配置将自动拉取节点列表</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">如果你有机场订阅，填在这里；否则用上面的 Cloudflare 代理即可</div>
           </div>
 
           <div class="form-group">
-            <label for="custom-proxies">自定义代理节点（YAML 格式，可选）</label>
-            <textarea id="custom-proxies" placeholder="如果没有订阅地址，可在此处填写自定义节点，格式：
-- name: 节点1
+            <label for="custom-proxies">自建节点（YAML 格式，可选）</label>
+            <textarea id="custom-proxies" placeholder="如果你的自建节点，格式：
+- name: 自建节点1
   type: ss
   server: 1.2.3.4
   port: 443

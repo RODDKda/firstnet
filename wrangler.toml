@@ -1,0 +1,16 @@
+name = "clashnet-proxy"
+main = "workers/proxy-worker.js"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 代理 Worker 的路由
+# 部署后 Clash 配置中的代理地址为: https://proxy.你的域名
+# 记得在 Cloudflare Dashboard 添加 DNS 记录: proxy 类型 CNAME 到 你的域名
+routes = [
+  { pattern = "proxy.你的域名/*", custom_domain = true },
+]
+
+# 环境变量
+# secrets 方式设置（更安全）: npx wrangler secret put ACCESS_TOKEN
+[vars]
+ACCESS_TOKEN = "b017e17b12b652680775c1906f89fdf0"
