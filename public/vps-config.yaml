@@ -1,0 +1,13 @@
+proxies:
+  - name: "VPS 代理"
+    type: vmess
+    server: proxy.mvp-bot.xyz
+    port: 443
+    uuid: 4be5400d-6843-4e9b-840e-a28dc7351bd3
+    alterId: 0
+    cipher: auto
+    network: ws
+    tls: true
+    ws-path: /ws/4be5400d-6843-4e9b-840e-a28dc7351bd3
+    servername: proxy.mvp-bot.xyz
+    client-fingerprint: chrome
