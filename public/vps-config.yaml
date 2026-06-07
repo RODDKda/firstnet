@@ -1,13 +1,21 @@
 proxies:
-  - name: "VPS 代理"
-    type: vmess
+  # 方案A: 通过 Cloudflare CDN (需 v2ray-plugin 支持)
+  - name: VPS-CDN
+    type: ss
     server: proxy.mvp-bot.xyz
     port: 443
-    uuid: 4be5400d-6843-4e9b-840e-a28dc7351bd3
-    alterId: 0
-    cipher: auto
-    network: ws
-    tls: true
-    ws-path: /ws/4be5400d-6843-4e9b-840e-a28dc7351bd3
-    servername: proxy.mvp-bot.xyz
-    client-fingerprint: chrome
+    cipher: aes-256-gcm
+    password: 4be5400d68434e9b
+    plugin: v2ray-plugin
+    plugin-opts:
+      mode: websocket
+      tls: true
+      path: /ws/4be5400d-6843-4e9b-840e-a28dc7351bd3
+
+  # 方案B: 直连 VPS (不需要 CDN，测试用)
+  - name: VPS-Direct
+    type: ss
+    server: 23.238.47.247
+    port: 10886
+    cipher: aes-256-gcm
+    password: 4be5400d68434e9b
